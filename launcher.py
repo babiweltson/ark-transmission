@@ -1,5 +1,7 @@
 import sys
 import subprocess
+import importlib.util
+import os
 
 def check_python_version():
     if sys.version_info[0] != 3:
@@ -25,11 +27,20 @@ def main():
         install_package('colorama')
     
     try:
-        from main import ArkAnalyzer
-        scanner = ArkAnalyzer()
+        # Look for any file starting with 'main' and ending with '.pyc'
+        pyc_files = [f for f in os.listdir('.') if f.startswith('main') and f.endswith('.pyc')]
+        if not pyc_files:
+            raise ImportError("No main.pyc file found")
+            
+        # Use the first matching file
+        spec = importlib.util.spec_from_file_location("main", pyc_files[0])
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
+        scanner = module.ArkAnalyzer()
         scanner.run()
     except Exception as e:
-        print("Error: Make sure launcher.py and main.pyc are in the same directory")
+        print("Error: Make sure launcher.py and the main.pyc file are in the same directory")
         print(f"Details: {str(e)}")
 
 if __name__ == "__main__":
